@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: ken2ky-linkedin-profile-api
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: PROFILE_RATE_LIMIT_MAX
+        value: "3"
+      - key: PROFILE_RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: PROFILE_CACHE_TTL_MS
+        value: "900000"
+      - key: PROFILE_CACHE_MAX_ENTRIES
+        value: "50"
+      - key: GLOBAL_EXTRACTION_LIMIT_MAX
+        value: "6"
+      - key: GLOBAL_EXTRACTION_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: LINKEDIN_REQUEST_TIMEOUT_MS
+        value: "30000"
+      - key: LINKEDIN_COOKIE
+        sync: false
+      - key: LINKEDIN_CSRF_TOKEN
+        sync: false

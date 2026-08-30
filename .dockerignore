@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.*
+.tools
+node_modules
+dist
+coverage
+tests
+private
+scratch
+*.har
+*.trace
+*.local.json
+npm-debug.log*

@@ -1,0 +1,44 @@
+{
+  "name": "linkedin-profile-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A TypeScript API that returns normalized data for a LinkedIn profile URL.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:session": "node --env-file=.env --import tsx src/cli/check-session-config.ts",
+    "replay:experience": "node --env-file=.env --import tsx src/cli/replay-experience.ts",
+    "replay:detail": "node --env-file=.env --import tsx src/cli/replay-detail-page.ts",
+    "extract:profile": "node --env-file=.env --import tsx src/cli/extract-profile.ts",
+    "lint": "eslint .",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/swagger": "^9.8.1",
+    "@fastify/swagger-ui": "^6.1.1",
+    "@fastify/type-provider-typebox": "^6.1.0",
+    "@sinclair/typebox": "^0.34.52",
+    "cheerio": "^1.2.0",
+    "fastify": "^5.12.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.4.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.9.1",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.68.0",
+    "vitest": "^4.1.11"
+  }
+}

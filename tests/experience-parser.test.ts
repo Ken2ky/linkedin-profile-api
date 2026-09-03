@@ -124,4 +124,19 @@ describe("parseExperienceResponse", () => {
       )
     ).toThrow(ApplicationError);
   });
+
+  it("removes a standalone Skills label from associated skills", () => {
+    const response = [
+      '0:["$","div",null,{"data-sdui-component":"profileCardsExperienceOnly","children":"$L1"}]',
+      '1:["$","section",null,{"componentKey":"entity-collection-item-one","children":["$L2","$L3","$L4","$L5"]}]',
+      '2:["$","p",null,{"children":["Engineer"]}]',
+      '3:["$","p",null,{"children":["Example Corp · Full-time"]}]',
+      '4:["$","p",null,{"children":["2024 - Present · 1 yr"]}]',
+      '5:["$","p",null,{"action":{"screenId":"ProfileSkillAssociationDetailsScreen"},"children":["Skills:","TypeScript"]}]'
+    ].join("\n");
+
+    expect(parseExperienceResponse(response)[0]?.associatedSkills).toEqual([
+      "TypeScript"
+    ]);
+  });
 });

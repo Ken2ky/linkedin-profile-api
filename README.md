@@ -76,7 +76,7 @@ Run all checks without contacting LinkedIn:
 npm run check
 ```
 
-This runs linting, strict type checking, 69 tests, and a production build. Then validate the configured session shape:
+This runs linting, strict type checking, 73 tests, and a production build. Then validate the configured session shape:
 
 ```powershell
 npm run check:session

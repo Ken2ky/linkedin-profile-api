@@ -80,7 +80,9 @@ function uniqueExperienceItems(items: ReactElement[]): ReactElement[] {
 
 function parseExperienceItem(item: ReactElement): ExperienceEntry[] {
   const allText = unique(collectVisibleText(item));
-  const associatedSkills = unique(collectAssociatedSkills(item));
+  const associatedSkills = unique(collectAssociatedSkills(item)).filter(
+    (value) => !/^skills?:?$/iu.test(value)
+  );
   const contentText = allText.filter((value) => !associatedSkills.includes(value));
 
   if (isGroupedExperience(contentText)) {

@@ -45,4 +45,46 @@ describe("parseTopCard", () => {
       "Bengaluru, Karnataka, India"
     );
   });
+
+  it("selects the complete top-card variant when an earlier variant has no name", () => {
+    const response = [
+      '0:["$","Section",null,{"viewTrackingSpecs":{"viewName":"profile-top-card"},"children":["$L1","$L2"]}]',
+      '1:["$","p",null,{"children":["Software Engineer"]}]',
+      '2:["$","Text",null,{"textProps":{"children":["Bengaluru, India"]}}]',
+      '3:["$","Wrapper",null,{"content":["$","Section",null,{"viewTrackingSpecs":{"viewName":"profile-top-card"},"children":["$L4","$L5","$L6","$L7"]}]}]',
+      '4:["$","h2",null,{"children":["Example Person"]}]',
+      '5:["$","p",null,{"children":["View Example’s verifications"]}]',
+      '6:["$","p",null,{"children":["Software Engineer"]}]',
+      '7:["$","Text",null,{"textProps":{"children":["Bengaluru, India"]}}]'
+    ].join("\n");
+
+    expect(parseTopCard(decodeRscRecords(response))).toMatchObject({
+      name: "Example Person",
+      headline: "Software Engineer",
+      location: "Bengaluru, India"
+    });
+  });
+
+  it("rejects a marked top card without a recognizable name", () => {
+    const response =
+      '0:["$","Section",null,{"viewTrackingSpecs":{"viewName":"profile-top-card"},"children":["$","p",null,{"children":["Software Engineer"]}]}]';
+
+    expect(() => parseTopCard(decodeRscRecords(response))).toThrow(
+      /recognizable name/
+    );
+  });
+
+  it("falls back to the document title when the top-card heading is detached", () => {
+    const response = [
+      '0:{"component":[["$","title",null,{"children":"Example Person | LinkedIn"}],["$","Section",null,{"viewTrackingSpecs":{"viewName":"profile-top-card"},"children":["$L1","$L2"]}]]}',
+      '1:["$","p",null,{"children":["Software Engineer"]}]',
+      '2:["$","Text",null,{"textProps":{"children":["Bengaluru, India"]}}]'
+    ].join("\n");
+
+    expect(parseTopCard(decodeRscRecords(response))).toMatchObject({
+      name: "Example Person",
+      headline: "Software Engineer",
+      location: "Bengaluru, India"
+    });
+  });
 });

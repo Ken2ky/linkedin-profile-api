@@ -26,8 +26,11 @@ interface ImageCandidate {
 }
 
 export function parseTopCard(records: RscRecordMap): TopCard {
-  const topCard = findElement(records, (props) => viewName(props) === TOP_CARD_VIEW);
-  if (!topCard) {
+  const topCards = findElements(
+    records,
+    (props) => viewName(props) === TOP_CARD_VIEW
+  );
+  if (topCards.length === 0) {
     throw new ApplicationError(
       "UPSTREAM_SCHEMA_CHANGED",
       "LinkedIn's profile top card was not found.",
@@ -35,12 +38,31 @@ export function parseTopCard(records: RscRecordMap): TopCard {
     );
   }
 
-  const text = collectTextCandidates(topCard, records);
-  const nameCandidate =
-    text.find((candidate) => candidate.tag === "h1" || candidate.tag === "h2") ??
-    findReachableHeading(topCard, records);
+  const candidates = topCards.map((topCard) => {
+    const text = collectTextCandidates(topCard, records);
+    const name =
+      text.find((candidate) => candidate.tag === "h1" || candidate.tag === "h2") ??
+      findReachableHeading(topCard, records);
+    return { topCard, text, name };
+  });
+  const selected = candidates.find((candidate) => candidate.name) ?? candidates[0];
+  const nameCandidate = selected?.name ?? findDocumentTitle(records);
+  if (!selected || !nameCandidate) {
+    throw new ApplicationError(
+      "UPSTREAM_SCHEMA_CHANGED",
+      "LinkedIn's profile top card did not expose a recognizable name.",
+      502
+    );
+  }
+
+  const { topCard, text } = selected;
   const headlineCandidate = text
-    .filter((candidate) => candidate.tag === "p" && candidate !== nameCandidate)
+    .filter(
+      (candidate) =>
+        candidate.tag === "p" &&
+        candidate !== nameCandidate &&
+        !/^view .+ verifications?$/iu.test(candidate.value)
+    )
     .sort((left, right) => left.depth - right.depth)[0];
   const location = findLocation(text, headlineCandidate);
 
@@ -60,6 +82,51 @@ export function parseTopCard(records: RscRecordMap): TopCard {
     profileImage,
     backgroundImage
   };
+}
+
+function findDocumentTitle(records: RscRecordMap): TextCandidate | undefined {
+  for (const record of records.values()) {
+    if (record.kind !== "json") continue;
+    const title = findElementByTag(record.value, "title");
+    if (!title) continue;
+    const documentTitle = normalizeText(
+      collectDirectText(title[3].children).join(" ")
+    );
+    const name = documentTitle.replace(/\s+\|\s+LinkedIn$/iu, "").trim();
+    if (name && name !== documentTitle) {
+      return { value: name, tag: "title", depth: 0 };
+    }
+  }
+  return undefined;
+}
+
+function findElementByTag(
+  value: unknown,
+  expectedTag: string
+): ReactElement | undefined {
+  if (Array.isArray(value)) {
+    if (isReactElement(value)) {
+      if (value[1] === expectedTag) return value;
+      for (const entry of Object.values(value[3])) {
+        const found = findElementByTag(entry, expectedTag);
+        if (found) return found;
+      }
+      return undefined;
+    }
+    for (const entry of value) {
+      const found = findElementByTag(entry, expectedTag);
+      if (found) return found;
+    }
+    return undefined;
+  }
+
+  if (isObject(value)) {
+    for (const entry of Object.values(value)) {
+      const found = findElementByTag(entry, expectedTag);
+      if (found) return found;
+    }
+  }
+  return undefined;
 }
 
 function findReachableHeading(
@@ -209,6 +276,51 @@ function findElement(
     if (found) return found;
   }
   return undefined;
+}
+
+function findElements(
+  records: RscRecordMap,
+  predicate: (props: Record<string, unknown>) => boolean
+): ReactElement[] {
+  const elements: ReactElement[] = [];
+  const seen = new Set<ReactElement>();
+
+  for (const record of records.values()) {
+    if (record.kind !== "json") continue;
+    collectElementsInValue(record.value, predicate, elements, seen);
+  }
+
+  return elements;
+}
+
+function collectElementsInValue(
+  value: unknown,
+  predicate: (props: Record<string, unknown>) => boolean,
+  elements: ReactElement[],
+  seen: Set<ReactElement>
+): void {
+  if (Array.isArray(value)) {
+    if (isReactElement(value)) {
+      if (predicate(value[3]) && !seen.has(value)) {
+        seen.add(value);
+        elements.push(value);
+      }
+      for (const entry of Object.values(value[3])) {
+        collectElementsInValue(entry, predicate, elements, seen);
+      }
+      return;
+    }
+    for (const entry of value) {
+      collectElementsInValue(entry, predicate, elements, seen);
+    }
+    return;
+  }
+
+  if (isObject(value)) {
+    for (const entry of Object.values(value)) {
+      collectElementsInValue(entry, predicate, elements, seen);
+    }
+  }
 }
 
 function findElementInValue(

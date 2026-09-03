@@ -43,7 +43,7 @@ async function loadProfileBootstrap(
   const html = await client.fetchProfilePage(profileUrl, signal);
   const stream = extractRehydrationStream(html);
   const records = decodeRscRecords(stream);
-  const vieweeProfileId = extractVieweeProfileId(records);
+  const vieweeProfileId = extractVieweeProfileId(records, vanityName);
 
   return {
     context: {
